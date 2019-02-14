@@ -1,3 +1,4 @@
 .idea
 databases/*
 images/elasticsearch/esdata/*
+logs/*
