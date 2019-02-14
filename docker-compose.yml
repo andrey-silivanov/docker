@@ -1,0 +1,73 @@
+# Версия docker-compose
+version: '3'
+
+# Список наших сервисов (контейнеров)
+services:
+  nginx:
+    # используем последний стабильный образ nginx
+    image: nginx:latest
+    # маршрутизируем порты
+    ports:
+    - "80:80"
+    - "443:443"
+    # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
+    volumes:
+    - ./hosts:/etc/nginx/conf.d
+    - /var/www:/var/www
+    - ./logs:/var/log/nginx
+    # nginx должен общаться с php контейнером
+    links:
+    - php
+  php:
+    # у нас свой образ для PHP, указываем путь к нему и говорим что его надо собрать
+    build: ./images/php
+    # этот образ будет общаться с mysql
+    links:
+    - db
+    - redis
+    - elasticsearch
+    # монтируем директорию с проектами
+    volumes:
+    - /var/www:/var/www
+    environment:
+      XDEBUG_CONFIG: "remote_host=192.168.220.1 remote_enable=1"
+      PHP_IDE_CONFIG: "serverName=Docker"
+  db:
+    build: ./images/mysql
+    ports:
+    - "3306:3306"
+    volumes:
+    - ./databases:/var/lib/mysql
+    # задаем пароль для root пользователя
+    environment:
+      MYSQL_ROOT_PASSWORD: 1
+  redis:
+    build: ./images/redis
+    ports:
+    - "6379:6379"
+  laravel-echo-server:
+    build:
+      context: ./images/laravel-echo-server
+    volumes:
+    - ./images/laravel-echo-server/laravel-echo-server.json:/app/laravel-echo-server.json:ro
+    ports:
+    - "6001:6001"
+    links:
+    - redis
+    - nginx
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.3
+    environment:
+    - discovery.type=single-node
+    - http.host=0.0.0.0
+    - transport.host=127.0.0.1
+    - xpack.security.enabled=false
+    - ES_JAVA_OPTS=-Xms750m -Xmx750m
+    volumes:
+    - ./images/elasticsearch/esdata:/usr/share/elasticsearch/data
+    - ./images/elasticsearch/esdata2:/usr/share/elasticsearch/logs
+    expose:
+    - "9200"
+    ports:
+    - "9200:9200"

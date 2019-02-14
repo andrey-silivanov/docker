@@ -1,0 +1,11 @@
+{
+  "name": "laravel-echo-server-docker",
+  "description": "Docker container for running laravel-echo-server",
+  "license": "MIT",
+  "dependencies": {
+    "laravel-echo-server": "^1.2.8"
+  },
+  "scripts": {
+    "start": "laravel-echo-server start"
+  }
+}
