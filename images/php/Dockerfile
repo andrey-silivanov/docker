@@ -1,5 +1,5 @@
 # Для начала указываем исходный образ, он будет использован как основа
-FROM php:5.6-fpm
+FROM php:7.2-fpm
 # Необязательная строка с указанием автора образа
 MAINTAINER PHPtoday.ru <info@phptoday.ru>
 
@@ -16,10 +16,10 @@ RUN apt-get update && apt-get install -y \
         libmcrypt-dev \
         libpng-dev \
         libxml2-dev \
-        #&& pecl install mcrypt-1.0.2 \   #from 7.2
+        && pecl install mcrypt-1.0.2 \
         #&& pear install -a SOAP-0.13.0 \
         #mcript need remove for mcrypt
-    && docker-php-ext-install -j$(nproc) mcrypt \
+  #  && docker-php-ext-install -j$(nproc) mcrypt \
     && docker-php-ext-install -j$(nproc) iconv mbstring mysqli pdo_mysql zip \
     && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
     && docker-php-ext-install -j$(nproc) gd \
@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install soap;
 
 #xdebug-2.6.0beta1 from 7.2
-RUN pecl install xdebug-2.5.5 && docker-php-ext-enable xdebug
+RUN pecl install xdebug-2.6.0beta1 && docker-php-ext-enable xdebug
 RUN echo 'zend_extension="/usr/local/lib/php/extensions/no-debug-non-zts-20151012/xdebug.so"' >> /usr/local/etc/php/php.ini
 RUN echo 'xdebug.remote_port=9000' >> /usr/local/etc/php/php.ini
 RUN echo 'xdebug.remote_enable=1' >> /usr/local/etc/php/php.ini
