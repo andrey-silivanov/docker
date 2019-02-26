@@ -3,41 +3,34 @@ version: '3'
 
 # Список наших сервисов (контейнеров)
 services:
-  nginx:
-    # используем последний стабильный образ nginx
-    image: nginx:latest
-    # маршрутизируем порты
-    ports:
-    - "80:80"
-    - "443:443"
-    # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
-    volumes:
-    - ./hosts:/etc/nginx/conf.d
-    - /var/www:/var/www
-    - ./logs:/var/log/nginx
-    # nginx должен общаться с php контейнером
-    links:
-    - php
   php:
     # у нас свой образ для PHP, указываем путь к нему и говорим что его надо собрать
     build: ./images/php
-    # этот образ будет общаться с mysql
-    links:
-    - db
-    - redis
-    - elasticsearch
-    # монтируем директорию с проектами
+    networks:
+    - backend
     volumes:
-    - /var/www:/var/www
-    environment:
-      XDEBUG_CONFIG: "remote_host=192.168.220.1 remote_enable=1"
-      PHP_IDE_CONFIG: "serverName=Docker"
+    - /var/www/google/:/var/www/google/
+  apache:
+    build: ./images/apache
+    depends_on:
+    - php
+    - db
+    networks:
+    - frontend
+    - backend
+    ports:
+    - "8080:80"
+    volumes:
+    - /var/www/google/public/:/var/www/google/public/
+
   db:
     build: ./images/mysql
     ports:
     - "3306:3306"
     volumes:
     - ./databases:/var/lib/mysql
+    networks:
+    - backend
     # задаем пароль для root пользователя
     environment:
       MYSQL_ROOT_PASSWORD: 1
@@ -54,7 +47,7 @@ services:
     - "6001:6001"
     links:
     - redis
-    - nginx
+    - apache
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:5.5.3
@@ -71,3 +64,7 @@ services:
     - "9200"
     ports:
     - "9200:9200"
+
+networks:
+  frontend:
+  backend:
